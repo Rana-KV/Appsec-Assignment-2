@@ -1,1 +1,1 @@
-http://127.0.0.1:8000/buy/1?director=%3Cscript%3Ealert(%22hello%22)%3C/script%3E
+http://127.0.0.1:8000/buy/1?director=<script>alert("hello")</script>
