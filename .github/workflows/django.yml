@@ -1,4 +1,4 @@
-name: Django CI
+name: CI Test for Django
 
 on:
   push:
