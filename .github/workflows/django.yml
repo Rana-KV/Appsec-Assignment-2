@@ -3,12 +3,9 @@ name: CI Test for Django
 on:
   push:
     branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 4
@@ -17,14 +14,19 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
+    
     - name: Install Dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+        python manage.py makemigrations LegacySite
+        python manage.py migrate
+        bash import_dbs.sh
+        
     - name: Run Tests
-      run: |
-        python manage.py test
+      run: python manage.py test
