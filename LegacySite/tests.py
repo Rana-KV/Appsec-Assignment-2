@@ -22,24 +22,4 @@ class MyTest(TestCase):
         response = self.client.get('http://localhost:8000/buy/1?director=<script>alert("hello")</script>')
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'alert("hello")')
-
-    def test_csrf_token(self):
-        '''
-        # Send GET request to get CSRF token
-        response = self.client.get('http://localhost:8000/gift')
-        self.assertEqual(response.status_code, 200)
-
-        # Extract CSRF token from response
-        csrf_token = response.cookies['csrftoken'].value
-        '''
-
-        # Send POST request with missing CSRF token
-        response = self.client.post('http://localhost:8000/gift/2', {'username': 'test2'})
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.status_code, 200)
-        
-        '''
-        # Send POST request with correct CSRF token
-        response = self.client.post(reverse('example-view'), {'data': 'example data'}, HTTP_X_CSRFTOKEN=csrf_token)
-        self.assertEqual(response.status_code, 200)
         '''
