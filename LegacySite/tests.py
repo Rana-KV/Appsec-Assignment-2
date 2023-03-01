@@ -24,6 +24,7 @@ class MyTest(TestCase):
         self.assertNotContains(response, 'alert("hello")')
         
     def test_csrf_token(self):
+        self.client = Client(enforce_csrf_checks=True)
         self.client.login(username='testuser', password='test')
         '''
         # Make a POST request without a CSRF token
