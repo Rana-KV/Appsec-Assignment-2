@@ -13,7 +13,7 @@ class MyTest(TestCase):
     fixtures = ["testdata.json"]
 
     # Assuming that your database had at least one Card in it, this
-    # test should pass.
+    # test should pass.    
     def test_get_card(self):
         allcards = Card.objects.all()
         self.assertNotEqual(len(allcards), 0)
@@ -24,6 +24,7 @@ class MyTest(TestCase):
         self.assertNotContains(response, 'alert("hello")')
         
     def test_csrf_token(self):
+        self.client.login(username='testuser', password='test')
         # Send POST request with missing CSRF token
-        response = self.client.get('http://localhost:8000/gift/1', {'username': 'test2', 'amount': ''})
+        response = self.client.post('http://localhost:8000/gift/1', {'username': 'test2', 'amount': ''})
         self.assertEqual(response.status_code, 403)
