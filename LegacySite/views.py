@@ -7,6 +7,7 @@ from . import extras
 from django.views.decorators.csrf import csrf_protect as csrf_protect
 from django.contrib.auth import login, authenticate, logout
 from django.core.exceptions import ObjectDoesNotExist
+from django.views.decorators.csrf import csrf_protect
 import os, tempfile
 
 SALT_LEN = 16
@@ -112,6 +113,7 @@ def buy_card_view(request, prod_num=0):
         return redirect("/buy/1")
 
 # KG: What stops an attacker from making me buy a card for him?
+@csrf_protect
 def gift_card_view(request, prod_num=0):
     context = {"prod_num" : prod_num}
     if request.method == "GET" and 'username' not in request.GET:
@@ -144,11 +146,6 @@ def gift_card_view(request, prod_num=0):
         if prod_num == 0:
             prod_num = 1
         # Get vars from post
-        csrf_token = request.POST.get('csrfmiddlewaretoken')
-        # Validate the CSRF token
-        if not request.csrf_token == csrf_token:
-            return HttpResponseForbidden('Invalid CSRF token')
-        
         user = request.POST.get('username', None)
         amount = request.POST.get('amount', None)
         if user is None:
