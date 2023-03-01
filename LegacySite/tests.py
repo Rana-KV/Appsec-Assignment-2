@@ -31,5 +31,5 @@ class MyTest(TestCase):
         self.assertEqual(response.status_code, 403)
         '''
         # Make a POST request with an invalid CSRF token
-        response = self.client.post('/my_form/', {'my_field': 'my_value'}, secure=True, HTTP_X_CSRFTOKEN='invalid_token')
+        response = self.client.post('http://localhost:8000/gift/1', {'username': 'test2', 'amount': ''}, secure=True, HTTP_X_CSRFTOKEN='invalid_token')
         self.assertEqual(response.status_code, 403)
