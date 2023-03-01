@@ -143,7 +143,12 @@ def gift_card_view(request, prod_num=0):
             return redirect("/login.html")
         if prod_num == 0:
             prod_num = 1
-        # Get vars from either post or get
+        # Get vars from post
+        csrf_token = request.POST.get('csrfmiddlewaretoken')
+        # Validate the CSRF token
+        if not request.csrf_token == csrf_token:
+            return HttpResponseForbidden('Invalid CSRF token')
+        
         user = request.POST.get('username', None)
         amount = request.POST.get('amount', None)
         if user is None:
