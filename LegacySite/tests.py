@@ -22,4 +22,3 @@ class MyTest(TestCase):
         response = self.client.get('http://localhost:8000/buy/1?director=<script>alert("hello")</script>')
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'alert("hello")')
-        '''
