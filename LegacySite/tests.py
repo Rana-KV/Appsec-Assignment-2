@@ -18,19 +18,21 @@ class MyTest(TestCase):
         allcards = Card.objects.all()
         self.assertNotEqual(len(allcards), 0)
    
-    def test_visit_website_no_alert(self):
+    def test_xss_alert(self):
         response = self.client.get('http://localhost:8000/buy/1?director=<script>alert("hello")</script>')
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'alert("hello")')
         
-    def test_csrf_token(self):
+    def test_xss_alert2(self):
+        response = self.client.get('http://localhost:8000/gift/1?director=<script>alert("hello")</script>')
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'alert("hello")')
+        
+        
+    def test_xsrf_POST(self):
         self.client = Client(enforce_csrf_checks=True)
         self.client.login(username='testuser', password='test')
-        '''
+        
         # Make a POST request without a CSRF token
-        response = self.client.post('http://localhost:8000/gift/1', {'username': 'testuser2', 'amount': ''}, secure=True)
-        self.assertEqual(response.status_code, 403)
-        '''
-        # Make a POST request with an invalid CSRF token
         response = self.client.post('http://localhost:8000/gift/1', {'username': 'test2', 'amount': ''})
         self.assertEqual(response.status_code, 403)
