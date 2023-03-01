@@ -1,0 +1,22 @@
+# Bug Report
+
+A brief description of the bugs found in the project
+
+## Bug 1 (XSS)
+
+About the bug leading to XSS vulnerability in the project:
+
+- The Web application is vulnerable to an XSS attack as the director parameter is not properly sanitized or escaped before being rendered in the buy and gift HTML template.
+- In the code, the director parameter is fetched from the GET request and assigned to the director key in the context dictionary. The context dictionary is then passed to the HTML template using Django's template rendering system. In the HTML template, the director variable is inserted into the page using the {{director|safe}} template tag. The safe filter tells Django that the value of director is safe to render as HTML and should not be escaped.
+- As the director parameter is under the control of the user, they could potentially inject a malicious script or HTML code into the parameter value, like the XSS payload: <script>alert("hello")</script>. If this payload is not properly sanitized or escaped before being rendered in the HTML template, it will be executed by the victim's browser and could lead to a successful XSS attack.
+- To prevent this vulnerability, it's important to properly sanitize or escape any user-controlled input before using it in HTML templates this is done by removing the safe tag in the template.
+
+## Bug 2 (XSRF)
+
+About the bug leading to XSRF vulnerability in the project:
+
+- The Web application is vulnerable to GET based XSRF attack as gift page doesn't use any XSRF protections while submitting the form.
+- In the code, the gift_card_view supports both GET and POST requests to gift a card to any vaild user.
+- As the page accepts both GET and POST request, an adversary can create a mailicoius webpage which send a GET request without the victim's knowledge and transfers the gift card.
+- To prevent this vulnerability, csrfmiddleware is used and the form template contains a randomly generated csrf token which is submitted with POST request and verified. Additonally GET based state change support in the Web application is completely removed.
+
