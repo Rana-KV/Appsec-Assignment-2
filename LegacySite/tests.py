@@ -24,10 +24,11 @@ class MyTest(TestCase):
         self.assertNotContains(response, 'alert("hello")')
         
     def test_xss_alert2(self):
+        self.client = Client(enforce_csrf_checks=True)
+        self.client.login(username='testuser', password='test')
         response = self.client.get('http://localhost:8000/gift/1?director=<script>alert("hello")</script>')
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'alert("hello")')
-        
         
     def test_xsrf_POST(self):
         self.client = Client(enforce_csrf_checks=True)
