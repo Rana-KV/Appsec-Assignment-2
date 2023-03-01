@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, Client
 from LegacySite.models import Card
 
 # Create your tests here.
