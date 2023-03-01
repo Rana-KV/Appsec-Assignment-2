@@ -138,17 +138,14 @@ def gift_card_view(request, prod_num=0):
         context['description'] = prod.description
         return render(request, "gift.html", context)
     # Hack: older partner sites only support GET, so special case this.
-    elif request.method == "POST" \
-        or request.method == "GET" and 'username' in request.GET:
+    elif request.method == "POST":
         if not request.user.is_authenticated:
             return redirect("/login.html")
         if prod_num == 0:
             prod_num = 1
         # Get vars from either post or get
-        user = request.POST.get('username', None) \
-            if request.method == "POST" else request.GET.get('username', None)
-        amount = request.POST.get('amount', None) \
-            if request.method == "POST" else request.GET.get('amount', None)
+        user = request.POST.get('username', None)
+        amount = request.POST.get('amount', None)
         if user is None:
             return HttpResponse("ERROR 404")
         try:
