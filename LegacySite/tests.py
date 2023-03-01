@@ -27,7 +27,7 @@ class MyTest(TestCase):
         self.client.login(username='testuser', password='test')
         '''
         # Make a POST request without a CSRF token
-        response = self.client.post('http://localhost:8000/gift/1', {'username': 'test2', 'amount': ''}, secure=True)
+        response = self.client.post('http://localhost:8000/gift/1', {'username': 'testuser2', 'amount': ''}, secure=True)
         self.assertEqual(response.status_code, 403)
         '''
         # Make a POST request with an invalid CSRF token
