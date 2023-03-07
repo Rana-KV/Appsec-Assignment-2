@@ -180,6 +180,7 @@ def gift_card_view(request, prod_num=0):
         card_file.close()
         return render(request, f"gift.html", context)
 
+@csrf_protect
 def use_card_view(request):
     context = {'card_found':None}
     if request.method == 'GET':
