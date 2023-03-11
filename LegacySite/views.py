@@ -195,7 +195,6 @@ def use_card_view(request):
         return render(request, 'use-card.html', context)
     elif request.method == "POST" and request.POST.get('card_supplied', False):
         # Post with specific card, use this card.
-        print(request.content_params)
         context['card_list'] = None
         # Need to write this to parse card type.
         card_file_data = request.FILES['card_data']
