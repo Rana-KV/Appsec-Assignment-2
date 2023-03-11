@@ -90,8 +90,7 @@
                         <div class="d-flex mb-2">
                           <span> {{card_item.product.description }}</span>
                         </div>
-                        <form action="/use.html" method="post">
-                        {% csrf_token %}
+                        <form action="/use.html" method="post">{% csrf_token %}
                         <input type="hidden" name="card_id" id="card_id" value="{{ card_item.id }}"/>
                         
                         <button class="btn btn-bid" type="submit">Use This Card</a>
@@ -112,8 +111,7 @@
                           <span> Submit your own card for use. Don't worry, this is completely secure! We will validate it on our end.</span>
                           <span class="ml-auto">This card can be for any price.</span>
                         </div>
-                        <form method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
+                        <form method="post" enctype="multipart/form-data">{% csrf_token %}
                         <input type="file" name="card_data">
                         <input type="hidden" name="card_supplied" id="card_supplied" value="True"/>
                         <input type="test" name="card_fname" id="card_fname" placeholder="NameYourCard">
