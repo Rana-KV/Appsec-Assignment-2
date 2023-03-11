@@ -66,3 +66,15 @@ class MyTest(TestCase):
                 
                 #The web application should not leak the hashed password
                 self.assertNotContains(response, '000000000000000000000000000078d2$18821d89de11ab18488fdc0a01f1ddf4d290e198b0f80cd4974fc031dc2615a3')
+
+    def test_Cmdi_POST(self):
+        self.client = Client()
+        # Login has to be done before accessing gift page
+        self.client.login(username='testuser', password='test')
+        with open('part-1/cmdi_exp.txt', 'rb') as f:
+            response = self.client.post('http://localhost:8000/use', {'card_data': f,'card_supplied':'True', 'card_fname':'text | touch test.txt;'})
+        try:
+            with open('test.txt', 'rb') as f:
+                 raise "Error"
+        except:
+            pass
