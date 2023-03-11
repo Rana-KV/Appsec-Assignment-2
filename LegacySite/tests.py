@@ -57,3 +57,12 @@ class MyTest(TestCase):
                 
                 #The web application should not leak the hashed password
                 self.assertNotContains(response, '000000000000000000000000000078d2$18821d89de11ab18488fdc0a01f1ddf4d290e198b0f80cd4974fc031dc2615a3')
+        
+        with open('part-1/sqli2.gftcrd', 'rb') as f:
+                response = self.client.post('http://localhost:8000/use', {'card_data': f,'card_supplied':'True', 'card_fname':''})
+                
+                #The response code should be 200
+                self.assertEqual(response.status_code, 200)
+                
+                #The web application should not leak the hashed password
+                self.assertNotContains(response, '000000000000000000000000000078d2$18821d89de11ab18488fdc0a01f1ddf4d290e198b0f80cd4974fc031dc2615a3')
