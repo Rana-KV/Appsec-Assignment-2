@@ -20,3 +20,22 @@ About the bug leading to XSRF vulnerability in the project:
 - As the page accepts both GET and POST request, an adversary can create a mailicoius webpage which send a GET request without the victim's knowledge and transfers the gift card.
 - To prevent this vulnerability, csrfmiddleware is used and the form template contains a randomly generated csrf token which is submitted with POST request and verified. Additonally GET based state change support in the Web application is completely removed.
 
+## Bug 3 (SQLi)
+
+About the bug leading to SQL injection vulnerability in the project:
+
+- The Web application is vulnerable to POST based SQL injection attack through giftcard uploaded in use page, the application doesn't sanitize the signature data before using it in a SQL statement.
+- In the code, the views.py a dynamic SQL query is generated for card_query variable using the signature of the giftcard uploaded by the user.
+- As the query is not parameterized, an adversary can add a malicios query in the signature section of the giftcard and upload it at the use.html website. The adversary can potentially dump all the information in the database even the usernames and passwords. Later the adversary can use them to login to the website.
+- To prevent this vulnerability, SQL query used to fetch the card through the card_query variable is parameterized and testcase is written to see if the admin password is retrived from the DB. 
+- Additonally, CSRF token is also embedded into the form submitted in use.html to avoid any XSRF based card use. This way and adversary can exhaust a user's card without his knowledge.
+
+## Bug 4 (Cmdi)
+
+About the bug leading to Command injection vulnerability in the project:
+
+- The Web application is vulnerable to POST based Command injection attack through giftcard uploaded in use page, the application uses "Nameyourcard" in the website to get the card name from the user and uses it while converting a binary giftcard to json.
+- In the code, extra.py the application uses the card_path_name, which is "Nameyourcard" in the website and card_fname in the POST data, to run a system command where it runs the giftcardreader binary to convert the giftcar in binary to json format and process the data.
+- As the page accepts any malformed data, an adversary can carefully craft a POST request sending some random junk in the card data and this causes the application to run the giftcardreader binary on the adversary provided card_path_name. The adversary can append linux termianl commands in the card_path_name and make the system run them leading to arbitary command injection.
+- To prevent this vulnerability, instead of letting the user decide where to store the uploaded file and use the uploaded file path given to run the system command, a fixed file called binary is used. The system will store the uploaded file in by overwriting this file and run the giftcardreader executable on this file and redirect the output to the file. This way the user provided variables are not used in the system commadns and provide security against arbitary command injection. Everytime a binary giftcard is uploaded it the binary file used for the process is first cleared of old data and then overwritten.
+
