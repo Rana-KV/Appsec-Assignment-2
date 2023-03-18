@@ -64,16 +64,14 @@ def write_card_data(card_file_path, product, price, customer):
         card_file.write(get_signature(json.dumps(data_dict)).decode('utf-8'))
 
 def parse_card_data(card_file_data, card_path_name):
-    print("Encrypted data:", card_file_data)
-    key = settings.SECRET_KEY.encode()
-    print("key", key)
-    fernet = Fernet(key)
-    decrypted_data = fernet.decrypt(card_file_data).decode()
-    print("decrypted data:", decrypted_data)
+    
     try:
+        key = settings.SECRET_KEY.encode()
+        fernet = Fernet(key)
+        decrypted_data = fernet.decrypt(card_file_data).decode()
         test_json = json.loads(decrypted_data)
         return decrypted_data.encode()
-    except (json.JSONDecodeError, UnicodeDecodeError):
+    except (json.JSONDecodeError, UnicodeDecodeError, cryptography.fernet.InvalidToken):
         pass
     ret_val = system(f" > binary;")
     with open('binary', 'wb') as card_file:
