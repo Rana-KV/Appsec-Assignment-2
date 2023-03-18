@@ -214,7 +214,6 @@ def use_card_view(request):
         try: 
             signature = json.loads(card_data)['records'][0]['signature']
         except:
-            raise Exception
             return HttpResponse("Error 404: Internal Server Error")
         # signatures should be pretty unique, right?
         card_query = Card.objects.raw('select id from LegacySite_card where data LIKE %s', [signature])
