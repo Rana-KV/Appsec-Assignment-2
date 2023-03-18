@@ -70,6 +70,7 @@ def buy_card_view(request, prod_num=0):
         director = request.GET.get('director', None)
         if director is not None:
             # KG: Wait, what is this used for? Need to check the template.
+            # PKV: Fixed
             context['director'] = director
         if prod_num != 0:
             try:
@@ -113,6 +114,7 @@ def buy_card_view(request, prod_num=0):
         return redirect("/buy/1")
 
 # KG: What stops an attacker from making me buy a card for him?
+# PKV: Fixed
 @csrf_protect
 def gift_card_view(request, prod_num=0):
     context = {"prod_num" : prod_num}
@@ -140,6 +142,7 @@ def gift_card_view(request, prod_num=0):
         context['description'] = prod.description
         return render(request, "gift.html", context)
     # Hack: older partner sites only support GET, so special case this.
+    # PKV: Removed support for GET for CSRF protection - Fixed
     elif request.method == "POST":
         if not request.user.is_authenticated:
             return redirect("/login.html")
@@ -207,10 +210,11 @@ def use_card_view(request):
         # check if we know about card.
         # KG: Where is this data coming from? RAW SQL usage with unkown
         # KG: data seems dangerous.
-        print(card_data.strip())
+        # PKV: Fixed SQLi
         try: 
             signature = json.loads(card_data)['records'][0]['signature']
         except:
+            raise Exception
             return HttpResponse("Error 404: Internal Server Error")
         # signatures should be pretty unique, right?
         card_query = Card.objects.raw('select id from LegacySite_card where data LIKE %s', [signature])

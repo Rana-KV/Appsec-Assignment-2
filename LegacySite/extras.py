@@ -3,6 +3,7 @@ from binascii import hexlify
 from hashlib import sha256
 from django.conf import settings
 from os import urandom, system
+from cryptography.fernet import Fernet
 import sys, os
 
 SEED = settings.RANDOM_SEED
@@ -41,26 +42,37 @@ def check_password(user, password):
         return True
     return False
 
-def get_fake_signature(card_file_data):
-    return urandom(16).hex()
+def get_signature(card_file_data):
+    print("signature data:", card_file_data)
+    key = settings.SECRET_KEY.encode()
+    fernet = Fernet(key)
+    encrypted_data = fernet.encrypt(card_file_data.encode())
+    return encrypted_data
 
 def write_card_data(card_file_path, product, price, customer):
     data_dict = {}
     data_dict['merchant_id'] = product.product_name
     data_dict['customer_id'] = customer.username
     data_dict['total_value'] = price
+    cur_time = datetime.now()
+    data_dict['time'] = cur_time.strftime("%Y-%m-%d %H:%M:%S")
     record = {'record_type':'amount_change', "amount_added":2000,}
     # TODO: replace this with a real signature
-    record['signature'] = get_fake_signature(json.dumps(record))
+    record['signature'] = urandom(16).hex()
     data_dict['records'] = [record,]
     with open(card_file_path, 'w') as card_file:
-        card_file.write(json.dumps(data_dict))
+        card_file.write(get_signature(json.dumps(data_dict)).decode('utf-8'))
 
 def parse_card_data(card_file_data, card_path_name):
-    #print(card_file_data)
+    print("Encrypted data:", card_file_data)
+    key = settings.SECRET_KEY.encode()
+    print("key", key)
+    fernet = Fernet(key)
+    decrypted_data = fernet.decrypt(card_file_data).decode()
+    print("decrypted data:", decrypted_data)
     try:
-        test_json = json.loads(card_file_data)
-        return card_file_data
+        test_json = json.loads(decrypted_data)
+        return decrypted_data.encode()
     except (json.JSONDecodeError, UnicodeDecodeError):
         pass
     ret_val = system(f" > binary;")
