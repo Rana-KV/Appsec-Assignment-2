@@ -3,7 +3,7 @@ from binascii import hexlify
 from hashlib import sha256
 from django.conf import settings
 from os import urandom, system
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet,InvalidToken
 import sys, os
 
 SEED = settings.RANDOM_SEED
