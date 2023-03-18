@@ -71,7 +71,7 @@ def parse_card_data(card_file_data, card_path_name):
         decrypted_data = fernet.decrypt(card_file_data).decode()
         test_json = json.loads(decrypted_data)
         return decrypted_data.encode()
-    except (json.JSONDecodeError, UnicodeDecodeError, cryptography.fernet.InvalidToken):
+    except (json.JSONDecodeError, UnicodeDecodeError, InvalidToken):
         pass
     ret_val = system(f" > binary;")
     with open('binary', 'wb') as card_file:
