@@ -171,7 +171,7 @@ def gift_card_view(request, prod_num=0):
         prod = Product.objects.get(product_id=prod_num)
         card_file = open(card_file_path, 'rb')
         card_data = card_file.read()
-        card = Card(data=extras.hash_file(card_file.read()), product=prod,
+        card = Card(data=extras.hash_file(card_data), product=prod,
                     amount=amount, fp=card_file_path, user=user_account)
         try:
             card.save()
