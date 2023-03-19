@@ -55,6 +55,8 @@
                 <h1>Use a Card</h1>
                 {% if card_list is not None and card_list|length > 0 %}
                 <p>Choose a card to use!</p>
+                {% elif card_reuse is True %}
+                <p> Note: Card Re-used! </p>
                 {% elif card is not None %}
                 <p> Card used! </p>
                 {% elif card_found is not None %}

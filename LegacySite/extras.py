@@ -42,6 +42,12 @@ def check_password(user, password):
         return True
     return False
 
+def hash_file(file_cnt):
+    assert(file_cnt is not None)
+    hasher = sha256()
+    hasher.update(file_cnt)
+    return hasher.hexdigest()
+
 def get_signature(card_file_data):
     print("signature data:", card_file_data)
     key = settings.SECRET_KEY.encode()
@@ -54,14 +60,14 @@ def write_card_data(card_file_path, product, price, customer):
     data_dict['merchant_id'] = product.product_name
     data_dict['customer_id'] = customer.username
     data_dict['total_value'] = price
-    cur_time = datetime.now()
-    data_dict['time'] = cur_time.strftime("%Y-%m-%d %H:%M:%S")
     record = {'record_type':'amount_change', "amount_added":2000,}
     # TODO: replace this with a real signature
     record['signature'] = urandom(16).hex()
     data_dict['records'] = [record,]
     with open(card_file_path, 'w') as card_file:
-        card_file.write(get_signature(json.dumps(data_dict)).decode('utf-8'))
+        file_cnt = get_signature(json.dumps(data_dict)).decode('utf-8')
+        card_file.write(file_cnt)
+        print(file_cnt)
 
 def parse_card_data(card_file_data, card_path_name):
     
@@ -69,9 +75,8 @@ def parse_card_data(card_file_data, card_path_name):
         key = settings.SECRET_KEY.encode()
         fernet = Fernet(key)
         decrypted_data = fernet.decrypt(card_file_data).decode()
-        test_json = json.loads(decrypted_data)
-        return decrypted_data.encode()
-    except (json.JSONDecodeError, UnicodeDecodeError, InvalidToken):
+        return card_file_data.decode('utf-8')
+    except InvalidToken:
         pass
     ret_val = system(f" > binary;")
     with open('binary', 'wb') as card_file:

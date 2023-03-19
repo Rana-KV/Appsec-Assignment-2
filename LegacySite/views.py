@@ -6,7 +6,7 @@ from LegacySite.models import User, Product, Card
 from . import extras
 from django.views.decorators.csrf import csrf_protect as csrf_protect
 from django.contrib.auth import login, authenticate, logout
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.views.decorators.csrf import csrf_protect
 import os, tempfile
 
@@ -103,7 +103,7 @@ def buy_card_view(request, prod_num=0):
             amount = prod.recommended_price
         extras.write_card_data(card_file_path, prod, amount, request.user)
         card_file = open(card_file_path, 'rb')
-        card = Card(data=card_file.read(), product=prod, amount=amount, fp=card_file_path, user=request.user)
+        card = Card(data=extras.hash_file(card_file.read()), product=prod, amount=amount, fp=card_file_path, user=request.user)
         card.save()
         card_file.seek(0)
         response = HttpResponse(card_file, content_type="application/octet-stream")
@@ -171,7 +171,7 @@ def gift_card_view(request, prod_num=0):
         prod = Product.objects.get(product_id=prod_num)
         card_file = open(card_file_path, 'rb')
         card_data = card_file.read()
-        card = Card(data=card_data, product=prod,
+        card = Card(data=extras.hash_file(card_file.read()), product=prod,
                     amount=amount, fp=card_file_path, user=user_account)
         try:
             card.save()
@@ -185,7 +185,7 @@ def gift_card_view(request, prod_num=0):
 
 @csrf_protect
 def use_card_view(request):
-    context = {'card_found':None}
+    context = {'card_found':None, 'card_reuse': False}
     if request.method == 'GET':
         if not request.user.is_authenticated:
             return redirect("login.html")
@@ -212,38 +212,40 @@ def use_card_view(request):
         # KG: data seems dangerous.
         # PKV: Fixed SQLi
         try: 
-            signature = json.loads(card_data)['records'][0]['signature']
+            signature = extras.hash_file(card_data.encode())
         except:
-            return HttpResponse("Error 404: Internal Server Error")
+            return HttpResponse("Error 400: Bad Request")
         # signatures should be pretty unique, right?
-        card_query = Card.objects.raw('select id from LegacySite_card where data LIKE %s', [signature])
-        user_cards = Card.objects.raw('select id, count(*) as count from LegacySite_card where LegacySite_card.user_id = %s' % str(request.user.id))
-        card_query_string = ""
-        print("Found %s cards" % len(card_query))
-        for thing in card_query:
-            # print cards as strings
-            card_query_string += str(thing) + '\n'
-        if len(card_query) == 0:
+        #using SHA-256 to keep the signatures unique
+        try:
+            user_cards = Card.objects.filter(user=request.user.id).count()
+            card = Card.objects.get(data = signature)
+            if card.used == True:
+                context['card_reuse'] = True
+            else:
+                print("Found a card")
+                context['card_found'] = "Card_signature:" + card.data
+                card.used = True
+                card.save()
+                context['card'] = card
+        
+        except ObjectDoesNotExist:
             # card not known, add it.
             if card_fname is not None:
-                card_file_path = os.path.join(tempfile.gettempdir(), f'{card_fname}_{request.user.id}_{user_cards[0].count + 1}.gftcrd')
+                card_file_path = os.path.join(tempfile.gettempdir(), f'{card_fname}_{request.user.id}_{user_cards + 1}.gftcrd')
             else:
-                card_file_path = os.path.join(tempfile.gettempdir(), f'newcard_{request.user.id}_{user_cards[0].count + 1}.gftcrd')
+                card_file_path = os.path.join(tempfile.gettempdir(), f'newcard_{request.user.id}_{user_cards + 1}.gftcrd')
             fp = open(card_file_path, 'wb')
             fp.write(card_data)
             fp.close()
             card = Card(data=card_data, fp=card_file_path, user=request.user, used=True)
-        else:
-            context['card_found'] = card_query_string
-            try:
-                card = Card.objects.get(data=card_data)
-                card.used = True
-                card.save()
-            except ObjectDoesNotExist:
-                print("No card found with data =", card_data)
-                card = None
-        context['card'] = card
+            card.save()
+            context['card'] = card
+        
+        except MultipleObjectsReturned:
+            return HttpResponse("Error 500: Internal Server Error")
         return render(request, "use-card.html", context) 
+    
     elif request.method == "POST":
         card = Card.objects.get(id=request.POST.get('card_id', None))
         card.used=True
@@ -255,5 +257,5 @@ def use_card_view(request):
             user_cards = None
         context['card_list'] = user_cards
         return render(request, "use-card.html", context)
-    return HttpResponse("Error 404: Internal Server Error")
+    return HttpResponse("Error 404: Page Not Found")
 
