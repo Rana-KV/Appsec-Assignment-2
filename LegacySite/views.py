@@ -101,9 +101,12 @@ def buy_card_view(request, prod_num=0):
         amount = request.POST.get('amount', None)
         if amount is None or amount == '':
             amount = prod.recommended_price
-        extras.write_card_data(card_file_path, prod, amount, request.user)
+        card_data = extras.write_card_data(card_file_path, prod, amount, request.user)
         card_file = open(card_file_path, 'rb')
-        card = Card(data=extras.hash_file(card_file.read()), product=prod, amount=amount, fp=card_file_path, user=request.user)
+        #Debug
+        print("Card_data:", card_data)
+        print("Hash:", extras.hash_file(card_data.encode()))
+        card = Card(data=extras.hash_file(card_data.encode()), product=prod, amount=amount, fp=card_file_path, user=request.user)
         card.save()
         card_file.seek(0)
         response = HttpResponse(card_file, content_type="application/octet-stream")
@@ -167,11 +170,12 @@ def gift_card_view(request, prod_num=0):
         prod = Product.objects.get(product_id=prod_num)
         if amount is None or amount == '':
             amount = prod.recommended_price
-        extras.write_card_data(card_file_path, prod, amount, request.user)
         prod = Product.objects.get(product_id=prod_num)
-        card_file = open(card_file_path, 'rb')
-        card_data = card_file.read()
-        card = Card(data=extras.hash_file(card_data), product=prod,
+        card_data = extras.write_card_data(card_file_path, prod, amount, request.user)
+        #Debug
+        print("Card_data:", card_data)
+        print("Hash:", extras.hash_file(card_data.encode()))
+        card = Card(data=extras.hash_file(card_data.encode()), product=prod,
                     amount=amount, fp=card_file_path, user=user_account)
         try:
             card.save()
@@ -180,7 +184,6 @@ def gift_card_view(request, prod_num=0):
             # an IntegrityError here, but the card is saved. So just
             # ignore it.
             pass
-        card_file.close()
         return render(request, f"gift.html", context)
 
 @csrf_protect
@@ -213,6 +216,9 @@ def use_card_view(request):
         # PKV: Fixed SQLi
         try: 
             signature = extras.hash_file(card_data.encode())
+            #Debug
+            print("Card_data:", card_data)
+            print("Hash:", signature)
         except:
             return HttpResponse("Error 400: Bad Request")
         # signatures should be pretty unique, right?

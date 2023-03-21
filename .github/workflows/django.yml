@@ -24,6 +24,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+        echo "ysKWy0yuHi6FaGI6p6cGaFHwZJV2bE4n" > Keys/Master_key
         python manage.py makemigrations LegacySite
         python manage.py migrate
         bash import_dbs.sh

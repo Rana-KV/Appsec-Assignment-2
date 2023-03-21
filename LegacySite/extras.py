@@ -1,10 +1,10 @@
-import json
+import json, sys, os, datetime, base64, hashlib
 from binascii import hexlify
 from hashlib import sha256
 from django.conf import settings
 from os import urandom, system
 from cryptography.fernet import Fernet,InvalidToken
-import sys, os
+
 
 SEED = settings.RANDOM_SEED
 
@@ -42,6 +42,12 @@ def check_password(user, password):
         return True
     return False
 
+def get_key():
+    key = hashlib.sha256(settings.SECRET_KEY.encode()).digest()
+    for i in range(int(settings.KEYS_INFO['Current_KEY_ID'])):
+        key = hashlib.sha256(key).digest()
+    return key
+
 def hash_file(file_cnt):
     assert(file_cnt is not None)
     hasher = sha256()
@@ -50,7 +56,8 @@ def hash_file(file_cnt):
 
 def get_signature(card_file_data):
     print("signature data:", card_file_data)
-    key = settings.SECRET_KEY.encode()
+    key = get_key()
+    key = base64.urlsafe_b64encode(key)
     fernet = Fernet(key)
     encrypted_data = fernet.encrypt(card_file_data.encode())
     return encrypted_data
@@ -60,24 +67,32 @@ def write_card_data(card_file_path, product, price, customer):
     data_dict['merchant_id'] = product.product_name
     data_dict['customer_id'] = customer.username
     data_dict['total_value'] = price
+    data_dict['time'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     record = {'record_type':'amount_change', "amount_added":2000,}
     # TODO: replace this with a real signature
     record['signature'] = urandom(16).hex()
     data_dict['records'] = [record,]
+    card_data = json.dumps(data_dict)
     with open(card_file_path, 'w') as card_file:
-        file_cnt = get_signature(json.dumps(data_dict)).decode('utf-8')
+        file_cnt = get_signature(card_data).decode('utf-8')
         card_file.write(file_cnt)
         print(file_cnt)
+    print(card_data)
+    return card_data
 
 def parse_card_data(card_file_data, card_path_name):
     
     try:
-        key = settings.SECRET_KEY.encode()
+        key = get_key()
+        key = base64.urlsafe_b64encode(key)
         fernet = Fernet(key)
         decrypted_data = fernet.decrypt(card_file_data).decode()
-        return card_file_data.decode('utf-8')
+        print(decrypted_data)
+        return decrypted_data
     except InvalidToken:
         pass
+    except TypeError:
+        print(TypeError)
     ret_val = system(f" > binary;")
     with open('binary', 'wb') as card_file:
         card_file.write(card_file_data)
