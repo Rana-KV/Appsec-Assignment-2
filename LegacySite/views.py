@@ -103,9 +103,6 @@ def buy_card_view(request, prod_num=0):
             amount = prod.recommended_price
         card_data = extras.write_card_data(card_file_path, prod, amount, request.user)
         card_file = open(card_file_path, 'rb')
-        #Debug
-        print("Card_data:", card_data)
-        print("Hash:", extras.hash_file(card_data.encode()))
         card = Card(data=extras.hash_file(card_data.encode()), product=prod, amount=amount, fp=card_file_path, user=request.user)
         card.save()
         card_file.seek(0)
@@ -172,9 +169,6 @@ def gift_card_view(request, prod_num=0):
             amount = prod.recommended_price
         prod = Product.objects.get(product_id=prod_num)
         card_data = extras.write_card_data(card_file_path, prod, amount, request.user)
-        #Debug
-        print("Card_data:", card_data)
-        print("Hash:", extras.hash_file(card_data.encode()))
         card = Card(data=extras.hash_file(card_data.encode()), product=prod,
                     amount=amount, fp=card_file_path, user=user_account)
         try:
@@ -210,15 +204,13 @@ def use_card_view(request):
         else:
             card_file_path = os.path.join(tempfile.gettempdir(), f'{card_fname}_{request.user.id}_parser.gftcrd')
         card_data = extras.parse_card_data(card_file_data.read(), card_file_path)
+        print(card_data)
         # check if we know about card.
         # KG: Where is this data coming from? RAW SQL usage with unkown
         # KG: data seems dangerous.
         # PKV: Fixed SQLi
         try: 
-            signature = extras.hash_file(card_data.encode())
-            #Debug
-            print("Card_data:", card_data)
-            print("Hash:", signature)
+            signature = extras.hash_file(card_data)
         except:
             return HttpResponse("Error 400: Bad Request")
         # signatures should be pretty unique, right?
@@ -244,8 +236,11 @@ def use_card_view(request):
             fp = open(card_file_path, 'wb')
             fp.write(card_data)
             fp.close()
-            card = Card(data=card_data, fp=card_file_path, user=request.user, used=True)
-            card.save()
+            card = Card(data=extras.hash_file(card_data), fp=card_file_path, user=request.user, used=True)
+            try:
+                card.save()
+            except IntegrityError:
+                pass
             context['card'] = card
         
         except MultipleObjectsReturned:

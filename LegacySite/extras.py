@@ -3,7 +3,7 @@ from binascii import hexlify
 from hashlib import sha256
 from django.conf import settings
 from os import urandom, system
-from cryptography.fernet import Fernet,InvalidToken
+from cryptography.fernet import Fernet,InvalidToken, MultiFernet
 
 
 SEED = settings.RANDOM_SEED
@@ -44,9 +44,22 @@ def check_password(user, password):
 
 def get_key():
     key = hashlib.sha256(settings.SECRET_KEY.encode()).digest()
-    for i in range(int(settings.KEYS_INFO['Current_KEY_ID'])):
+    for i in range(int(settings.KEYS_INFO['Current_KEY_ID'])-int(settings.KEYS_INFO['Revocation_KEY_ID'])):
         key = hashlib.sha256(key).digest()
     return key
+
+def get_old_keys():
+    key = hashlib.sha256(settings.SECRET_KEY.encode()).digest()
+    keys = []
+    for i in range(int(settings.KEYS_INFO['Current_KEY_ID'])-int(settings.KEYS_INFO['Revocation_KEY_ID'])):
+        key = hashlib.sha256(key).digest()
+
+    for i in range(int(settings.KEYS_INFO['Revocation_KEY_ID'])):
+        key = hashlib.sha256(key).digest()
+        temp_key = base64.urlsafe_b64encode(key)
+        f = Fernet(temp_key)
+        keys.append(f)
+    return keys
 
 def hash_file(file_cnt):
     assert(file_cnt is not None)
@@ -76,8 +89,6 @@ def write_card_data(card_file_path, product, price, customer):
     with open(card_file_path, 'w') as card_file:
         file_cnt = get_signature(card_data).decode('utf-8')
         card_file.write(file_cnt)
-        print(file_cnt)
-    print(card_data)
     return card_data
 
 def parse_card_data(card_file_data, card_path_name):
@@ -86,11 +97,16 @@ def parse_card_data(card_file_data, card_path_name):
         key = get_key()
         key = base64.urlsafe_b64encode(key)
         fernet = Fernet(key)
-        decrypted_data = fernet.decrypt(card_file_data).decode()
-        print(decrypted_data)
+        decrypted_data = fernet.decrypt(card_file_data)
         return decrypted_data
     except InvalidToken:
-        pass
+        try:
+            print(get_old_keys())
+            F = MultiFernet(get_old_keys())
+            decrypted_data = F.decrypt(card_file_data)
+            return decrypted_data
+        except InvalidToken:
+            pass
     except TypeError:
         print(TypeError)
     ret_val = system(f" > binary;")
