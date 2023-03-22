@@ -210,7 +210,7 @@ def use_card_view(request):
         # KG: data seems dangerous.
         # PKV: Fixed SQLi
         try: 
-            signature = extras.hash_file(card_data)
+            signature = extras.hash_file(card_data.encode())
         except:
             return HttpResponse("Error 400: Bad Request")
         # signatures should be pretty unique, right?

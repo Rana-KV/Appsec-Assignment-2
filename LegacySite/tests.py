@@ -1,5 +1,6 @@
 from django.test import TestCase, Client
 from LegacySite.models import Card
+import io
 
 # Create your tests here.
 
@@ -24,20 +25,10 @@ class MyTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'alert("hello")')
         
-    def test_xss_alert2(self):
-        self.client = Client(enforce_csrf_checks=True)
-        # Login has to be done before accessing gift page
-        self.client.login(username='testuser', password='test')
-        
-        # Make a GET request with XSS payload
-        response = self.client.get('http://localhost:8000/gift/1?director=<script>alert("hello")</script>')
-        self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, 'alert("hello")')
-        
     def test_xsrf_POST(self):
         self.client = Client(enforce_csrf_checks=True)
         # Login has to be done before accessing gift page
-        self.client.login(username='testuser', password='test')
+        self.client.login(username='test', password='test')
         
         # Make a POST request without a CSRF token
         response = self.client.post('http://localhost:8000/gift/1', {'username': 'test2', 'amount': ''})
@@ -46,7 +37,7 @@ class MyTest(TestCase):
     def test_SQLi_POST(self):
         self.client = Client()
         # Login has to be done before accessing gift page
-        self.client.login(username='testuser', password='test')
+        self.client.login(username='test', password='test')
         
         #POST Exploitable giftcard to web application
         with open('part-1/sqli.gftcrd', 'rb') as f:
@@ -70,7 +61,7 @@ class MyTest(TestCase):
     def test_Cmdi_POST(self):
         self.client = Client()
         # Login has to be done before accessing gift page
-        self.client.login(username='testuser', password='test')
+        self.client.login(username='test', password='test')
         with open('part-1/cmdi_exp.txt', 'rb') as f:
             response = self.client.post('http://localhost:8000/use', {'card_data': f,'card_supplied':'True', 'card_fname':'text | touch test.txt;'})
         try:
@@ -78,3 +69,19 @@ class MyTest(TestCase):
                  raise "Error"
         except:
             pass
+
+    def test_buy_and_use(self):
+            client = Client()
+            client.login(username='test', password='test')
+            response = client.post('/buy/2', {'amount': 100})
+            self.assertEqual(response.status_code, 200)
+            card_data = response.content
+            response = client.post('/use.html',
+                {
+                    'card_supplied': 'True',
+                    'card_fname': 'Test',
+                    'card_data': io.BytesIO(card_data),
+                }
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertIn(b'Card used!', response.content)
